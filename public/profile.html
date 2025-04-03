@@ -118,7 +118,7 @@
                 const data = await response.json();
 
                 dataContent.innerHTML = `
-          <p><strong>Значение:</strong> ${data.data}</p>
+          <p><strong>Значение:</strong> ${data.data.value}</p>
           <p><strong>Время генерации:</strong> ${new Date(data.data.timestamp).toLocaleString()}</p>
           <p><strong>Источник:</strong> ${data.source === 'cache' ? 'Из кэша' : 'Новые данные'}</p>
         `;
