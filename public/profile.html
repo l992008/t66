@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Светлая тема (по умолчанию) */
+        body {
+            --bg-color: #f5f5f5;
+            --text-color: #333;
+            --primary-color: #4a6fa5;
+            --card-bg: #fff;
+            --error-color: #e74c3c;
+        }
+
+        /* Темная тема */
+        body.dark {
+            --bg-color: #121212;
+            --text-color: #fff;
+            --primary-color: #6b8cae;
+            --card-bg: #1e1e1e;
+            --error-color: #ff6b6b;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+            font-family: 'Montserrat', sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Личный кабинет</h1>
+
+        <div class="theme-switcher">
+            <button id="theme-btn" class="theme-btn">Тёмная тема</button>
+        </div>
+
+        <div class="profile-info">
+            <p>Добро пожаловать, <span id="username" class="username"></span>!</p>
+        </div>
+
+        <div class="data-section">
+            <h2>Получить данные</h2>
+            <button id="refresh-btn" class="refresh-btn">Обновить данные</button>
+            <div id="data-content" class="data-content">
+                <p>Нажмите кнопку "Обновить данные" чтобы увидеть информацию</p>
+            </div>
+        </div>
+
+        <button class="logout-btn">Выйти из системы</button>
+    </div>
+
+    <script>
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', () => {
+            // Восстановление темы
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark');
+                document.getElementById('theme-btn').textContent = 'Светлая тема';
+            }
+
+            // Назначение обработчиков
+            document.getElementById('theme-btn').addEventListener('click', toggleTheme);
+            document.getElementById('refresh-btn').addEventListener('click', loadData);
+            document.querySelector('.logout-btn').addEventListener('click', logout);
+
+            // Загрузка данных
+            checkAuth();
+            loadProfile();
+        });
+
+        // Переключение темы
+        function toggleTheme() {
+            document.body.classList.toggle('dark');
+            const isDark = document.body.classList.contains('dark');
+            document.getElementById('theme-btn').textContent = isDark ? 'Светлая тема' : 'Тёмная тема';
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        }
+
+        // Проверка авторизации
+        async function checkAuth() {
+            try {
+                const response = await fetch('/profile');
+                if (!response.ok) {
+                    window.location.href = '/';
+                }
+            } catch (error) {
+                window.location.href = '/';
+            }
+        }
+
+        // Загрузка профиля
+        async function loadProfile() {
+            try {
+                const response = await fetch('/profile');
+                const data = await response.json();
+                document.getElementById('username').textContent = data.username;
+            } catch (error) {
+                console.error('Ошибка загрузки профиля:', error);
+            }
+        }
+
+        // Загрузка данных
+        async function loadData() {
+            try {
+                const dataContent = document.getElementById('data-content');
+                dataContent.innerHTML = '<p class="loading">Загрузка данных...</p>';
+
+                const response = await fetch('/data');
+                const data = await response.json();
+
+                dataContent.innerHTML = `
+          <p><strong>Значение:</strong> ${data.data}</p>
+          <p><strong>Время генерации:</strong> ${new Date(data.data.timestamp).toLocaleString()}</p>
+          <p><strong>Источник:</strong> ${data.source === 'cache' ? 'Из кэша' : 'Новые данные'}</p>
+        `;
+            } catch (error) {
+                document.getElementById('data-content').innerHTML =
+                    '<p class="error">Ошибка загрузки данных</p>';
+                console.error('Ошибка загрузки данных:', error);
+            }
+        }
+
+        // Выход из системы
+        async function logout() {
+            try {
+                const response = await fetch('/logout', { method: 'POST' });
+                if (response.ok) {
+                    window.location.href = '/';
+                }
+            } catch (error) {
+                console.error('Ошибка выхода:', error);
+            }
+        }
+    </script>
+</body>
+
+</html>

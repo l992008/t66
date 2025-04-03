@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Авторизация</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Светлая тема (по умолчанию) */
+        body {
+            --bg-color: #f5f5f5;
+            --text-color: #333;
+            --primary-color: #4a6fa5;
+            --card-bg: #fff;
+            --input-bg: #fff;
+            --input-border: #ddd;
+        }
+
+        /* Темная тема */
+        body.dark {
+            --bg-color: #121212;
+            --text-color: #fff;
+            --primary-color: #6b8cae;
+            --card-bg: #1e1e1e;
+            --input-bg: #2d2d2d;
+            --input-border: #444;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <button id="theme-btn" class="theme-btn">Тёмная тема</button>
+
+        <h1>Добро пожаловать</h1>
+
+        <div class="tabs">
+            <button class="tab active">Вход</button>
+            <button class="tab">Регистрация</button>
+        </div>
+
+        <div id="login-form" class="form">
+            <input type="text" placeholder="Ваш логин">
+            <input type="password" placeholder="Ваш пароль">
+            <button>Войти в систему</button>
+        </div>
+
+        <div id="register-form" class="form" style="display:none;">
+            <input type="text" placeholder="Придумайте логин">
+            <input type="password" placeholder="Придумайте пароль">
+            <button>Создать аккаунт</button>
+        </div>
+    </div>
+
+    <script>
+        // Переключение темы
+        document.getElementById('theme-btn').addEventListener('click', function () {
+            document.body.classList.toggle('dark');
+            const isDark = document.body.classList.contains('dark');
+            this.textContent = isDark ? 'Светлая тема' : 'Тёмная тема';
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        });
+
+        // При загрузке страницы
+        document.addEventListener('DOMContentLoaded', function () {
+            // Восстановление темы
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark');
+                document.getElementById('theme-btn').textContent = 'Светлая тема';
+            }
+
+            // Переключение между вкладками
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function () {
+                    document.querySelector('.tab.active').classList.remove('active');
+                    this.classList.add('active');
+
+                    const showLogin = this.textContent === 'Вход';
+                    document.getElementById('login-form').style.display = showLogin ? 'flex' : 'none';
+                    document.getElementById('register-form').style.display = showLogin ? 'none' : 'flex';
+                });
+            });
+        });
+
+        // Обработчики для кнопок входа и регистрации
+        document.querySelector('#login-form button').addEventListener('click', login);
+        document.querySelector('#register-form button').addEventListener('click', register);
+
+        async function login() {
+            const username = document.querySelector('#login-form input[type="text"]').value;
+            const password = document.querySelector('#login-form input[type="password"]').value;
+
+            if (!username || !password) {
+                alert('Заполните все поля');
+                return;
+            }
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    window.location.href = '/profile.html';
+                } else {
+                    alert(data.message || 'Ошибка входа');
+                }
+            } catch (error) {
+                alert('Ошибка соединения');
+            }
+        }
+
+        async function register() {
+            const username = document.querySelector('#register-form input[type="text"]').value;
+            const password = document.querySelector('#register-form input[type="password"]').value;
+
+            if (!username || !password) {
+                alert('Заполните все поля');
+                return;
+            }
+
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Регистрация успешна! Теперь войдите');
+                    document.querySelector('.tab').click(); // Переключаем на вкладку входа
+                } else {
+                    alert(data.message || 'Ошибка регистрации');
+                }
+            } catch (error) {
+                alert('Ошибка соединения');
+            }
+        }
+    </script>
+</body>
+
+</html>
